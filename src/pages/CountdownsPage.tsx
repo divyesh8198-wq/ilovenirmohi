@@ -24,9 +24,13 @@ function CountdownCard({ cd }: { cd: Countdown }) {
   useEffect(() => {
     function update() {
       const now = new Date();
-      const target = parseISO(cd.target_date);
-      if (isPast(target)) { setTime({ d: 0, h: 0, m: 0, s: 0, done: true }); return; }
+      const dateStr = cd.target_date.includes('T') ? cd.target_date : `${cd.target_date}T00:00:00`;
+      const target = new Date(dateStr);
       const diff = differenceInSeconds(target, now);
+      if (diff <= 0) {
+        setTime({ d: 0, h: 0, m: 0, s: 0, done: true });
+        return;
+      }
       setTime({
         d: Math.floor(diff / 86400),
         h: Math.floor((diff % 86400) / 3600),

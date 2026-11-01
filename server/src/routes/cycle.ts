@@ -37,14 +37,19 @@ router.get('/shared-summary', authenticate, (_req: AuthRequest, res: Response): 
 
 router.post('/', authenticate, (req: AuthRequest, res: Response): void => {
   if (!requireManuuu(req, res)) return;
-  const { periodStart, periodEnd, cycleLength, flowLevel, symptoms, mood, notes, shareWithPartner } = req.body;
-  if (!periodStart) { res.status(400).json({ error: 'Period start date required' }); return; }
+  const { periodStart, start_date, periodEnd, end_date, cycleLength, flowLevel, flow_level, symptoms, mood, notes, shareWithPartner, is_shared } = req.body;
+  const start = periodStart || start_date;
+  if (!start) { res.status(400).json({ error: 'Period start date required' }); return; }
+  const end = periodEnd || end_date || null;
+  const flow = flowLevel || flow_level || null;
+  const share = (shareWithPartner || is_shared) ? 1 : 0;
+  const symptomsVal = typeof symptoms === 'string' ? symptoms : JSON.stringify(symptoms || []);
   const id = uuidv4();
   db.prepare(`INSERT INTO cycle_tracker (id, user_id, period_start, period_end, cycle_length, flow_level, symptoms, mood, notes, share_with_partner)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).run(
-    id, req.user!.id, periodStart, periodEnd || null, cycleLength || null,
-    flowLevel || null, JSON.stringify(symptoms || []), mood || null,
-    notes || null, shareWithPartner ? 1 : 0
+    id, req.user!.id, start, end, cycleLength || null,
+    flow, symptomsVal, mood || null,
+    notes || null, share
   );
   res.status(201).json({ id });
 });

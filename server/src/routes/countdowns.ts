@@ -7,16 +7,18 @@ const router = Router();
 
 router.get('/', authenticate, (_req: AuthRequest, res: Response): void => {
   res.json(db.prepare(`SELECT c.*, u.display_name as creator_name FROM countdowns c
-    LEFT JOIN users u ON c.creator_id = u.id ORDER BY c.target_date ASC`).all());
+    LEFT JOIN users u ON c.creator_id = u.id
+    ORDER BY CASE WHEN date(c.target_date) >= date('now') THEN 0 ELSE 1 END, c.target_date ASC`).all());
 });
 
 router.post('/', authenticate, (req: AuthRequest, res: Response): void => {
-  const { title, targetDate, category, emoji, isRecurring } = req.body;
-  if (!title || !targetDate) { res.status(400).json({ error: 'Title and date required' }); return; }
+  const { title, targetDate, target_date, category, emoji, isRecurring } = req.body;
+  const date = targetDate || target_date;
+  if (!title || !date) { res.status(400).json({ error: 'Title and date required' }); return; }
   const id = uuidv4();
   db.prepare(`INSERT INTO countdowns (id, creator_id, title, target_date, category, emoji, is_recurring)
     VALUES (?, ?, ?, ?, ?, ?, ?)`).run(
-    id, req.user!.id, title, targetDate, category || 'anniversary', emoji || '💗', isRecurring ? 1 : 0
+    id, req.user!.id, title, date, category || 'anniversary', emoji || '💗', isRecurring ? 1 : 0
   );
   res.status(201).json({ id });
 });

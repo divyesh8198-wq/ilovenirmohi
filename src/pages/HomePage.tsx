@@ -38,10 +38,11 @@ function RelationshipCounter() {
     return () => clearInterval(id);
   }, []);
 
-  const days = Math.floor(secs / 86400);
-  const hrs  = Math.floor((secs % 86400) / 3600);
-  const mins = Math.floor((secs % 3600) / 60);
-  const s    = secs % 60;
+  const safeSecs = Math.max(0, secs);
+  const days = Math.floor(safeSecs / 86400);
+  const hrs  = Math.floor((safeSecs % 86400) / 3600);
+  const mins = Math.floor((safeSecs % 3600) / 60);
+  const s    = safeSecs % 60;
 
   const daysSinceMet = differenceInDays(new Date(), FIRST_MET);
 
@@ -85,7 +86,8 @@ function NextCountdown({ cd }: { cd: { title: string; target_date: string; emoji
   const [secs, setSecs] = useState(0);
   useEffect(() => {
     function upd() {
-      const diff = differenceInSeconds(parseISO(cd.target_date), new Date());
+      const dateStr = cd.target_date.includes('T') ? cd.target_date : `${cd.target_date}T00:00:00`;
+      const diff = differenceInSeconds(new Date(dateStr), new Date());
       setSecs(Math.max(0, diff));
     }
     upd();

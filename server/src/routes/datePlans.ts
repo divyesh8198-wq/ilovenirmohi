@@ -11,12 +11,13 @@ router.get('/', authenticate, (_req: AuthRequest, res: Response): void => {
 });
 
 router.post('/', authenticate, (req: AuthRequest, res: Response): void => {
-  const { title, description, plannedDate, location, budget, status, notes } = req.body;
+  const { title, description, plannedDate, planned_date, location, budget, status, notes } = req.body;
   if (!title) { res.status(400).json({ error: 'Title required' }); return; }
   const id = uuidv4();
+  const dateVal = plannedDate || planned_date || null;
   db.prepare(`INSERT INTO date_plans (id, creator_id, title, description, planned_date, location, budget, status, notes)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`).run(
-    id, req.user!.id, title, description || null, plannedDate || null,
+    id, req.user!.id, title, description || null, dateVal,
     location || null, budget || null, status || 'idea', notes || null
   );
   res.status(201).json({ id });

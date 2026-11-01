@@ -12,12 +12,13 @@ router.get('/', authenticate, (_req: AuthRequest, res: Response): void => {
 });
 
 router.post('/', authenticate, (req: AuthRequest, res: Response): void => {
-  const { title, description, eventDate, photoIds, visibility } = req.body;
-  if (!title || !eventDate) { res.status(400).json({ error: 'Title and date required' }); return; }
+  const { title, description, eventDate, event_date, photoIds, visibility } = req.body;
+  const date = eventDate || event_date;
+  if (!title || !date) { res.status(400).json({ error: 'Title and date required' }); return; }
   const id = uuidv4();
   db.prepare(`INSERT INTO memories (id, creator_id, title, description, event_date, photo_ids, visibility)
     VALUES (?, ?, ?, ?, ?, ?, ?)`).run(
-    id, req.user!.id, title, description || null, eventDate,
+    id, req.user!.id, title, description || null, date,
     JSON.stringify(photoIds || []), visibility || 'shared'
   );
   res.status(201).json({ id });

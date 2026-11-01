@@ -32,7 +32,8 @@ router.get('/:id/file', authenticate, (req: AuthRequest, res: Response): void =>
   } | undefined;
   if (!selfie) { res.status(404).json({ error: 'Not found' }); return; }
   if (selfie.uploader_id !== user.id && !selfie.is_public) { res.status(403).json({ error: 'Private selfie' }); return; }
-  const filePath = path.join(__dirname, '..', '..', selfie.file_path);
+  const subPath = selfie.file_path.startsWith('uploads') ? selfie.file_path : path.join('uploads', selfie.file_path);
+  const filePath = path.join(__dirname, '..', '..', subPath);
   if (!fs.existsSync(filePath)) { res.status(404).json({ error: 'File missing' }); return; }
   res.sendFile(path.resolve(filePath));
 });

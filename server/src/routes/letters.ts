@@ -9,9 +9,9 @@ const router = Router();
 router.get('/', authenticate, (req: AuthRequest, res: Response): void => {
   const user = req.user!;
   const letters = db.prepare(`
-    SELECT l.*, u.display_name as author_name FROM letters l
+    SELECT l.*, u.display_name as author_name, u.username as author_username FROM letters l
     LEFT JOIN users u ON l.author_id = u.id
-    WHERE l.author_id = ? OR (l.is_shared = 1 AND l.recipient_id = ?)
+    WHERE l.author_id = ? OR (l.is_shared = 1 AND (l.recipient_id = ? OR l.recipient_id IS NULL))
     ORDER BY l.created_at DESC
   `).all(user.id, user.id);
   res.json(letters);
@@ -30,20 +30,26 @@ router.get('/:id', authenticate, (req: AuthRequest, res: Response): void => {
 });
 
 router.post('/', authenticate, (req: AuthRequest, res: Response): void => {
-  const { title, content, recipientUsername, mood, isDraft } = req.body;
-  if (!title || !content) { res.status(400).json({ error: 'Title and content required' }); return; }
+  const { title, subject, content, recipientUsername, mood, isDraft, is_draft } = req.body;
+  const letterTitle = title || subject;
+  if (!letterTitle || !content) { res.status(400).json({ error: 'Title and content required' }); return; }
   
-  let recipientId: string | null = null;
+  // Find other user as recipient by default
+  const otherUser = db.prepare('SELECT id FROM users WHERE id != ?').get(req.user!.id) as { id: string } | undefined;
+  let recipientId = otherUser?.id || null;
   if (recipientUsername) {
     const recipient = db.prepare('SELECT id FROM users WHERE username = ?').get(recipientUsername) as { id: string } | undefined;
-    recipientId = recipient?.id || null;
+    if (recipient) recipientId = recipient.id;
   }
+
+  const draftVal = (isDraft === true || is_draft === true) ? 1 : 0;
+  const sharedVal = draftVal ? 0 : 1;
 
   const id = uuidv4();
   db.prepare(`INSERT INTO letters (id, author_id, recipient_id, title, content, mood, is_draft, is_shared)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`).run(
-    id, req.user!.id, recipientId, title, content, mood || null,
-    isDraft !== false ? 1 : 0, 0
+    id, req.user!.id, recipientId, letterTitle, content, mood || null,
+    draftVal, sharedVal
   );
   res.status(201).json({ id });
 });

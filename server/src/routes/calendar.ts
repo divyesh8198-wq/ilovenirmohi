@@ -12,12 +12,14 @@ router.get('/', authenticate, (_req: AuthRequest, res: Response): void => {
 });
 
 router.post('/', authenticate, (req: AuthRequest, res: Response): void => {
-  const { title, description, eventDate, eventTime, category, color, isRecurring, recurrenceRule, visibility, reminderDays } = req.body;
-  if (!title || !eventDate) { res.status(400).json({ error: 'Title and date required' }); return; }
+  const { title, description, eventDate, event_date, eventTime, event_time, category, color, isRecurring, recurrenceRule, visibility, reminderDays } = req.body;
+  const date = eventDate || event_date;
+  const time = eventTime || event_time || null;
+  if (!title || !date) { res.status(400).json({ error: 'Title and date required' }); return; }
   const id = uuidv4();
   db.prepare(`INSERT INTO calendar_events (id, creator_id, title, description, event_date, event_time, category, color, is_recurring, recurrence_rule, visibility, reminder_days)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).run(
-    id, req.user!.id, title, description || null, eventDate, eventTime || null,
+    id, req.user!.id, title, description || null, date, time,
     category || 'general', color || '#f4a5c4', isRecurring ? 1 : 0,
     recurrenceRule || null, visibility || 'shared', reminderDays || 1
   );
