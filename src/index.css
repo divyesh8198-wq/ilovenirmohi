@@ -1,0 +1,164 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+
+  body {
+    @apply font-body text-stone-700 min-h-screen;
+    background: linear-gradient(135deg, #fff0f5 0%, #fce4ff 50%, #f0e6ff 100%);
+    background-attachment: fixed;
+  }
+
+  ::selection { background: #fda4af; color: #7b2d3a; }
+
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: #fff0f5; }
+  ::-webkit-scrollbar-thumb { background: linear-gradient(#f9a8d4, #c084fc); border-radius: 99px; }
+}
+
+@layer components {
+
+  /* ── Polaroid ── */
+  .polaroid {
+    @apply bg-white p-3 pb-10 shadow-polaroid transition-all duration-300 cursor-pointer relative;
+    transform-origin: center center;
+    border-radius: 4px;
+  }
+  .polaroid::after {
+    content: '🎀';
+    position: absolute;
+    top: -10px; right: -8px;
+    font-size: 18px;
+    filter: drop-shadow(0 1px 2px rgba(0,0,0,.15));
+  }
+  .polaroid:hover { transform: rotate(2deg) scale(1.04); z-index: 10; }
+  .polaroid img { @apply w-full object-cover; }
+
+  /* ── Glass card ── */
+  .glass-card {
+    background: rgba(255,255,255,0.72);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    @apply border border-white/60 rounded-3xl shadow-soft;
+  }
+
+  /* ── Page container ── */
+  .page-container { @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8; }
+
+  /* ── Section headers ── */
+  .section-title {
+    @apply font-display text-3xl font-bold mb-1;
+    background: linear-gradient(135deg, #db2777, #7c3aed);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  }
+  .section-subtitle { @apply font-handwriting text-xl text-pink-400 mb-6; }
+
+  /* ── Inputs ── */
+  .input-dreamy {
+    @apply w-full px-4 py-3 bg-white/80 border-2 border-pink-200 rounded-2xl text-stone-700
+           placeholder-stone-300 focus:outline-none focus:ring-2 focus:ring-pink-300
+           focus:border-pink-300 transition-all duration-200;
+  }
+
+  /* ── Buttons ── */
+  .btn-primary {
+    @apply px-6 py-3 text-white font-bold rounded-2xl shadow-md
+           hover:scale-105 active:scale-95 transition-all duration-200 focus:outline-none;
+    background: linear-gradient(135deg, #f472b6, #a855f7);
+  }
+  .btn-primary:hover { background: linear-gradient(135deg, #ec4899, #9333ea); box-shadow: 0 0 20px rgba(244,114,182,0.4); }
+
+  .btn-secondary {
+    @apply px-6 py-3 bg-white text-pink-600 border-2 border-pink-200 font-medium
+           rounded-2xl hover:bg-pink-50 hover:border-pink-300 transition-all duration-200;
+  }
+  .btn-ghost {
+    @apply px-4 py-2 text-stone-500 hover:text-pink-600 hover:bg-pink-50
+           rounded-xl transition-all duration-200;
+  }
+
+  /* ── Nav link ── */
+  .nav-link {
+    @apply flex items-center gap-2.5 px-3 py-2.5 text-sm font-medium text-stone-600
+           rounded-2xl hover:text-pink-700 hover:bg-pink-50 transition-all duration-200;
+  }
+  .nav-link.active {
+    background: linear-gradient(135deg, rgba(244,114,182,0.15), rgba(168,85,247,0.1));
+    @apply text-pink-700 border border-pink-200;
+  }
+
+  /* ── Kawaii bow decoration ── */
+  .bow-deco::before {
+    content: '🎀';
+    margin-right: 6px;
+    font-style: normal;
+  }
+
+  /* ── Tag pill ── */
+  .tag-pill {
+    @apply inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium;
+    background: linear-gradient(135deg, #fce7f3, #ede9fe);
+    color: #9333ea;
+  }
+
+  /* ── Timeline ── */
+  .timeline-dot {
+    @apply absolute w-5 h-5 rounded-full border-3 border-white shadow-md;
+    background: linear-gradient(135deg, #f472b6, #a855f7);
+  }
+}
+
+@layer utilities {
+  .text-gradient {
+    background: linear-gradient(135deg, #db2777, #7c3aed);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  }
+  .bg-dreamy {
+    background: linear-gradient(135deg, #fff0f5 0%, #fce4ff 50%, #f0e6ff 100%);
+  }
+  .shadow-kawaii { box-shadow: 0 4px 20px rgba(244,114,182,0.25), 0 0 0 2px rgba(244,114,182,0.1); }
+  .shadow-kuromi { box-shadow: 0 4px 20px rgba(168,85,247,0.25), 0 0 0 2px rgba(168,85,247,0.1); }
+}
+
+/* ── Loading shimmer ── */
+.shimmer {
+  background: linear-gradient(90deg, #fce7f3 25%, #fdf4ff 50%, #fce7f3 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+/* ── Lightbox ── */
+.lightbox-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.92);
+  z-index: 100;
+  display: flex; align-items: center; justify-content: center;
+}
+
+/* ── Kawaii scrolling stars ── */
+@keyframes float-up {
+  0% { transform: translateY(0) rotate(0deg); opacity: 0.8; }
+  100% { transform: translateY(-100vh) rotate(360deg); opacity: 0; }
+}
+
+/* ── Custom animations ── */
+@keyframes wiggle {
+  0%, 100% { transform: rotate(-3deg); }
+  50% { transform: rotate(3deg); }
+}
+.animate-wiggle { animation: wiggle 0.5s ease-in-out infinite; }
+
+@keyframes bounce-soft {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+.animate-bounce-soft { animation: bounce-soft 2s ease-in-out infinite; }
+
+@media print { nav, .no-print { display: none !important; } }
