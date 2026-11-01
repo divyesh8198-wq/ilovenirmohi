@@ -5,12 +5,27 @@ import { authenticate, AuthRequest } from '../middleware/auth';
 
 const router = Router();
 
+function getLocalDateString(): string {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
 // Get today's question + both answers
 router.get('/today', authenticate, (_req: AuthRequest, res: Response): void => {
-  const today = new Date().toISOString().split('T')[0];
-  const question = db.prepare(`SELECT * FROM daily_questions WHERE asked_date = ?`).get(today) as {
+  const today = getLocalDateString();
+  let question = db.prepare(`SELECT * FROM daily_questions WHERE asked_date = ?`).get(today) as {
     id: string; question: string; asked_date: string;
   } | undefined;
+  
+  if (!question) {
+    question = db.prepare(`SELECT * FROM daily_questions ORDER BY asked_date DESC LIMIT 1`).get() as {
+      id: string; question: string; asked_date: string;
+    } | undefined;
+  }
+  
   if (!question) { res.json(null); return; }
   
   const answers = db.prepare(`SELECT qa.*, u.display_name, u.username FROM question_answers qa
