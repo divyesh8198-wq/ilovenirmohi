@@ -125,6 +125,8 @@ const QUICK = [
   { to:'/bucket-list',emoji:'✨',label:'Bucket List',       color:'from-yellow-50 to-amber-50 border-yellow-200' },
   { to:'/questions', emoji:'💭', label:"Today's Q",         color:'from-sky-50 to-blue-50 border-sky-200' },
   { to:'/countdowns',emoji:'⏰', label:'Countdowns',        color:'from-lime-50 to-green-50 border-lime-200' },
+  { to:'/sleep',     emoji:'🌙', label:'Sleep & Dreams',    color:'from-indigo-50 to-purple-50 border-indigo-200' },
+  { to:'/location',  emoji:'📍', label:'Where Are You?',    color:'from-emerald-50 to-teal-50 border-emerald-200' },
   { to:'/calendar',  emoji:'📅', label:'Our Calendar',      color:'from-cyan-50 to-teal-50 border-cyan-200' },
   { to:'/diary',     emoji:'📔', label:'My Diary',          color:'from-stone-50 to-slate-50 border-stone-200' },
 ];

@@ -238,6 +238,33 @@ export function initDatabase(): void {
       created_at TEXT DEFAULT (datetime('now')),
       FOREIGN KEY (creator_id) REFERENCES users(id)
     );
+
+    -- Sleep Tracker
+    CREATE TABLE IF NOT EXISTS sleep_tracker (
+      id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL,
+      is_sleeping INTEGER DEFAULT 0,
+      fell_asleep_at TEXT,
+      woke_up_at TEXT,
+      duration_minutes INTEGER,
+      sleep_quality TEXT,
+      bedside_note TEXT,
+      created_at TEXT DEFAULT (datetime('now')),
+      FOREIGN KEY (user_id) REFERENCES users(id)
+    );
+
+    -- Location Tracker
+    CREATE TABLE IF NOT EXISTS location_tracker (
+      user_id TEXT PRIMARY KEY,
+      latitude REAL NOT NULL,
+      longitude REAL NOT NULL,
+      accuracy REAL,
+      place_name TEXT,
+      status_text TEXT,
+      battery_level INTEGER,
+      updated_at TEXT DEFAULT (datetime('now')),
+      FOREIGN KEY (user_id) REFERENCES users(id)
+    );
   `);
 
   console.log('✓ Database initialized at:', DB_PATH);

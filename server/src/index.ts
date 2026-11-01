@@ -22,6 +22,8 @@ import questionsRoutes from './routes/questions';
 import selfiesRoutes from './routes/selfies';
 import cycleRoutes from './routes/cycle';
 import countdownsRoutes from './routes/countdowns';
+import sleepRoutes from './routes/sleep';
+import locationRoutes from './routes/location';
 import seedRoutes from './routes/seed';
 
 const app = express();
@@ -72,6 +74,8 @@ app.use('/api/questions', questionsRoutes);
 app.use('/api/selfies', selfiesRoutes);
 app.use('/api/cycle', cycleRoutes);
 app.use('/api/countdowns', countdownsRoutes);
+app.use('/api/sleep', sleepRoutes);
+app.use('/api/location', locationRoutes);
 app.use('/api/seed', seedRoutes);
 
 // Health check

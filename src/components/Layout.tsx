@@ -3,7 +3,7 @@ import { NavLink } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import {
   Home, Image, Baby, Video, Mic, Clock, Mail, BookOpen,
-  Calendar, Heart, Star, HelpCircle, Timer, Camera, Moon,
+  Calendar, Heart, Star, HelpCircle, Timer, Camera, Moon, MapPin,
   Menu, X, LogOut, ChevronRight
 } from 'lucide-react';
 
@@ -17,6 +17,8 @@ const NAV_ITEMS = [
   { to: '/letters', icon: Mail, label: 'Love Letters', emoji: '💌' },
   { to: '/diary', icon: BookOpen, label: 'My Diary', emoji: '📔' },
   { to: '/selfie', icon: Camera, label: 'Daily Selfie', emoji: '🤳' },
+  { to: '/sleep', icon: Moon, label: 'Sleep & Dreams', emoji: '🌙' },
+  { to: '/location', icon: MapPin, label: 'Where Are You?', emoji: '📍' },
   { to: '/calendar', icon: Calendar, label: 'Our Calendar', emoji: '📅' },
   { to: '/dates', icon: Heart, label: 'Date Planner', emoji: '🌹' },
   { to: '/bucket-list', icon: Star, label: 'Bucket List', emoji: '✨' },

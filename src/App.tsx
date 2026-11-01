@@ -17,6 +17,8 @@ import QuestionsPage from './pages/QuestionsPage';
 import CountdownsPage from './pages/CountdownsPage';
 import SelfiePage from './pages/SelfiePage';
 import CyclePage from './pages/CyclePage';
+import SleepTrackerPage from './pages/SleepTrackerPage';
+import LocationTrackerPage from './pages/LocationTrackerPage';
 
 function ProtectedRoutes() {
   const { user, isLoading } = useAuth();
@@ -51,6 +53,8 @@ function ProtectedRoutes() {
         <Route path="/questions" element={<QuestionsPage />} />
         <Route path="/countdowns" element={<CountdownsPage />} />
         <Route path="/selfie" element={<SelfiePage />} />
+        <Route path="/sleep" element={<SleepTrackerPage />} />
+        <Route path="/location" element={<LocationTrackerPage />} />
         {/* Cycle tracker — only accessible to manuuu (enforced on server too) */}
         <Route path="/cycle" element={<CyclePage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
