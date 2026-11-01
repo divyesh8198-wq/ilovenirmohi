@@ -130,7 +130,7 @@ const QUICK = [
 ];
 
 export default function HomePage() {
-  const { user } = useAuth();
+  const { user, token } = useAuth();
   const isManuuu = user?.username === 'manuuu';
   const greeting = isManuuu ? 'Divy cha baal 🎀' : 'Manuu cha baal 🖤';
 
@@ -300,7 +300,7 @@ export default function HomePage() {
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-4">
               {recentPhotos.map((p: { id: string; original_name: string }) => (
                 <Link key={p.id} to="/gallery" className="polaroid block hover:scale-105">
-                  <img src={`/api/photos/${p.id}/file?token=${localStorage.getItem('olu_token')||''}`} alt={p.original_name}
+                  <img src={`/api/photos/${p.id}/file?token=${token||localStorage.getItem('olu_token')||''}`} alt={p.original_name}
                     className="w-full aspect-square object-cover" loading="lazy" />
                 </Link>
               ))}
