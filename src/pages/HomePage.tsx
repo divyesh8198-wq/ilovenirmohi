@@ -6,8 +6,8 @@ import { useAuth } from '../contexts/AuthContext';
 import { differenceInDays, differenceInSeconds, parseISO, format } from 'date-fns';
 
 // ── Our special dates ──
-const FIRST_MET      = new Date('2024-09-24T20:56:00');   // 24 Sep 2024, 8:56 PM — when we met 🌸
-const FEELINGS_START = new Date('2024-10-21T00:00:00');   // 21 Oct 2024 — when feelings began 💗
+const FIRST_MET      = new Date('2026-09-24T20:56:00');   // 24 Sep 2026, 8:56 PM — when we met 🌸
+const FEELINGS_START = new Date('2026-10-21T00:00:00');   // 21 Oct 2026 — when feelings began 💗
 const RELATIONSHIP_START = FEELINGS_START;                 // counting from feelings day
 
 // Floating kawaii background elements
