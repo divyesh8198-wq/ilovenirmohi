@@ -15,7 +15,7 @@ interface Photo {
 }
 
 export default function ChildhoodPage() {
-  const { user } = useAuth();
+  const { user, token } = useAuth();
   const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -161,7 +161,7 @@ export default function ChildhoodPage() {
                 onClick={() => setLightboxIndex(i)}
               >
                 <img
-                  src={`/api/photos/${photo.id}/file?token=${localStorage.getItem('olu_token')||''}`}
+                  src={`/api/photos/${photo.id}/file?token=${token||localStorage.getItem('olu_token')||''}`}
                   alt={photo.caption || 'Childhood memory'}
                   className="w-full h-48 object-cover"
                   style={{ filter: 'sepia(40%) brightness(0.95)' }}
@@ -210,7 +210,7 @@ export default function ChildhoodPage() {
               onClick={e => e.stopPropagation()}
             >
               <img
-                src={`/api/photos/${currentPhoto.id}/file?token=${localStorage.getItem('olu_token')||''}`}
+                src={`/api/photos/${currentPhoto.id}/file?token=${token||localStorage.getItem('olu_token')||''}`}
                 alt={currentPhoto.caption || 'Memory'}
                 className="w-full max-h-[65vh] object-contain"
                 style={{ filter: 'sepia(30%)' }}
