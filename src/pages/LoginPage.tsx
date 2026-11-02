@@ -135,8 +135,12 @@ export default function LoginPage() {
     try {
       await login(selected.username, password);
       navigate('/');
-    } catch {
-      setError('Wrong password! Try again 💔');
+    } catch (err: any) {
+      if (err.response?.status === 401) {
+        setError('Wrong password! Try again 💔');
+      } else {
+        setError('Server connecting or offline! Please ensure server is running 🔌');
+      }
     } finally {
       setLoading(false);
     }
