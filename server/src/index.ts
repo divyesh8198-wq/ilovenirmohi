@@ -1,13 +1,14 @@
+import 'express-async-errors';
 import express from 'express';
 import cors from 'cors';
-import path from 'path';
-import fs from 'fs';
 import dotenv from 'dotenv';
 import { initDatabase } from './database';
+import { initializeMediaStorage } from './storage';
+import { getJwtSecret } from './security';
 
 dotenv.config();
 
-// Import routes
+// database imports storage.ts, which loads server/.env before route modules read settings.
 import authRoutes from './routes/auth';
 import photosRoutes from './routes/photos';
 import videosRoutes from './routes/videos';
@@ -22,42 +23,27 @@ import questionsRoutes from './routes/questions';
 import selfiesRoutes from './routes/selfies';
 import cycleRoutes from './routes/cycle';
 import countdownsRoutes from './routes/countdowns';
-import sleepRoutes from './routes/sleep';
 import locationRoutes from './routes/location';
-import seedRoutes from './routes/seed';
+import sleepRoutes from './routes/sleep';
 
 const app = express();
 const PORT = process.env.PORT || 4000;
-
-// Ensure media directories exist
-const MEDIA_DIRS = [
-  'uploads/photos',
-  'uploads/videos',
-  'uploads/voice-notes',
-  'uploads/selfies',
-  'uploads/avatars',
-];
-MEDIA_DIRS.forEach((dir) => {
-  const fullPath = path.join(__dirname, '..', dir);
-  if (!fs.existsSync(fullPath)) {
-    fs.mkdirSync(fullPath, { recursive: true });
-  }
-});
-
-// Initialize database
-initDatabase();
+getJwtSecret(); // Fail at startup instead of running with a known or missing signing key.
 
 // Middleware
+const allowedOrigins = (process.env.ALLOWED_ORIGINS || 'http://localhost:5173,http://localhost:4173,http://localhost:3000')
+  .split(',').map((origin) => origin.trim()).filter(Boolean);
 app.use(cors({
-  origin: ['http://localhost:5173', 'http://localhost:4173', 'http://localhost:3000'],
+  origin: allowedOrigins,
   credentials: true,
 }));
+app.use((_req, res, next) => {
+  res.setHeader('Referrer-Policy', 'no-referrer');
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  next();
+});
 app.use(express.json({ limit: '100mb' }));
 app.use(express.urlencoded({ extended: true, limit: '100mb' }));
-
-// Serve uploaded media with auth-aware middleware (photos served via API routes for privacy)
-// Public static: only serve avatars without auth
-app.use('/uploads/avatars', express.static(path.join(__dirname, '..', 'uploads', 'avatars')));
 
 // API Routes
 app.use('/api/auth', authRoutes);
@@ -74,26 +60,25 @@ app.use('/api/questions', questionsRoutes);
 app.use('/api/selfies', selfiesRoutes);
 app.use('/api/cycle', cycleRoutes);
 app.use('/api/countdowns', countdownsRoutes);
-app.use('/api/sleep', sleepRoutes);
 app.use('/api/location', locationRoutes);
-app.use('/api/seed', seedRoutes);
+app.use('/api/sleep', sleepRoutes);
 
 // Health check
 app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok', message: 'Our Little Universe API ✦', time: new Date().toISOString() });
 });
 
-// Serve frontend static build if dist exists (for full-stack deployment on Render)
-const DIST_PATH = path.join(__dirname, '..', '..', 'dist');
-if (fs.existsSync(DIST_PATH)) {
-  app.use(express.static(DIST_PATH));
-  app.get('*', (_req, res) => {
-    res.sendFile(path.join(DIST_PATH, 'index.html'));
+async function startServer(): Promise<void> {
+  await initDatabase();
+  await initializeMediaStorage();
+  app.listen(PORT, () => {
+    console.log(`✦ Our Little Universe running on port ${PORT}`);
   });
 }
 
-app.listen(PORT, () => {
-  console.log(`✦ Our Little Universe API running on http://localhost:${PORT}`);
+void startServer().catch((error) => {
+  console.error('Could not start Our Little Universe:', error);
+  process.exit(1);
 });
 
 export default app;

@@ -18,8 +18,8 @@ function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: numbe
 }
 
 // GET /api/location/status
-router.get('/status', authenticate, (_req: AuthRequest, res: Response): void => {
-  const users = db.prepare('SELECT id, username, display_name FROM users').all() as {
+router.get('/status', authenticate, async (_req: AuthRequest, res: Response): Promise<void> => {
+  const users = await db.prepare('SELECT id, username, display_name FROM users').all() as {
     id: string; username: string; display_name: string;
   }[];
 
@@ -27,7 +27,7 @@ router.get('/status', authenticate, (_req: AuthRequest, res: Response): void => 
   const userLocs: { lat: number; lng: number }[] = [];
 
   for (const u of users) {
-    const loc = db.prepare('SELECT * FROM location_tracker WHERE user_id = ?').get(u.id) as {
+    const loc = await db.prepare('SELECT * FROM location_tracker WHERE user_id = ?').get(u.id) as {
       latitude: number; longitude: number; place_name?: string; status_text?: string;
       battery_level?: number; updated_at: string;
     } | undefined;
@@ -59,7 +59,7 @@ router.get('/status', authenticate, (_req: AuthRequest, res: Response): void => 
 });
 
 // POST /api/location/update
-router.post('/update', authenticate, (req: AuthRequest, res: Response): void => {
+router.post('/update', authenticate, async (req: AuthRequest, res: Response): Promise<void> => {
   const user = req.user!;
   const { latitude, longitude, accuracy, placeName, place_name, statusText, status_text, batteryLevel, battery_level } = req.body;
 
@@ -73,7 +73,7 @@ router.post('/update', authenticate, (req: AuthRequest, res: Response): void => 
   const battery = batteryLevel !== undefined ? batteryLevel : (battery_level !== undefined ? battery_level : null);
   const now = new Date().toISOString();
 
-  db.prepare(`
+  await db.prepare(`
     INSERT INTO location_tracker (user_id, latitude, longitude, accuracy, place_name, status_text, battery_level, updated_at)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     ON CONFLICT(user_id) DO UPDATE SET

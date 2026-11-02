@@ -1,7 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
-
-const JWT_SECRET = process.env.JWT_SECRET || 'fallback-secret-change-me';
+import { getJwtSecret } from '../security';
 
 export interface AuthRequest extends Request {
   user?: {
@@ -12,7 +11,7 @@ export interface AuthRequest extends Request {
 }
 
 export function authenticate(req: AuthRequest, res: Response, next: NextFunction): void {
-  // Accept token from Authorization header OR ?token= query param (for img/video/audio tags)
+  // Media elements cannot send Authorization headers, so their URLs carry the short-lived app token.
   const authHeader = req.headers.authorization;
   const queryToken = req.query.token as string | undefined;
 
@@ -24,7 +23,7 @@ export function authenticate(req: AuthRequest, res: Response, next: NextFunction
 
   const token = raw;
   try {
-    const decoded = jwt.verify(token, JWT_SECRET) as {
+    const decoded = jwt.verify(token, getJwtSecret()) as {
       id: string;
       username: string;
       displayName: string;
@@ -41,7 +40,7 @@ export function optionalAuth(req: AuthRequest, _res: Response, next: NextFunctio
   if (authHeader && authHeader.startsWith('Bearer ')) {
     const token = authHeader.slice(7);
     try {
-      const decoded = jwt.verify(token, JWT_SECRET) as {
+      const decoded = jwt.verify(token, getJwtSecret()) as {
         id: string;
         username: string;
         displayName: string;
