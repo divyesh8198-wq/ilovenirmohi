@@ -1,6 +1,8 @@
 import Database from 'better-sqlite3';
 import path from 'path';
 import fs from 'fs';
+import bcrypt from 'bcryptjs';
+import { v4 as uuidv4 } from 'uuid';
 
 const DATA_DIR = path.join(__dirname, '..', 'data');
 const DB_PATH = path.join(DATA_DIR, 'universe.db');
@@ -266,6 +268,48 @@ export function initDatabase(): void {
       FOREIGN KEY (user_id) REFERENCES users(id)
     );
   `);
+
+  // Ensure default accounts and starter data exist (for fresh deployments like Render)
+  const userCount = db.prepare('SELECT COUNT(*) as c FROM users').get() as { c: number };
+  if (userCount.c === 0) {
+    const divsId = uuidv4();
+    const manuuuId = uuidv4();
+    const divsHash = bcrypt.hashSync('091207', 12);
+    const manuuuHash = bcrypt.hashSync('010808', 12);
+
+    db.prepare(`INSERT INTO users (id, username, display_name, password_hash) VALUES (?, 'divs', 'Divs 💖', ?)`).run(divsId, divsHash);
+    db.prepare(`INSERT INTO users (id, username, display_name, password_hash) VALUES (?, 'manuuu', 'Manuuu 🌸', ?)`).run(manuuuId, manuuuHash);
+
+    // Starter countdowns
+    const cds = [
+      { title: "One Month Anniversary 💗", date: "2026-11-21", cat: "anniversary", emoji: "💍" },
+      { title: "Divs's Birthday 🎂", date: "2026-12-09", cat: "birthday", emoji: "🎂" },
+      { title: "New Year Together 2027 ✨", date: "2027-01-01", cat: "special", emoji: "🎉" },
+      { title: "Manuuu's Birthday 🌸", date: "2027-08-01", cat: "birthday", emoji: "🎀" },
+      { title: "1 Year Anniversary 💍", date: "2027-10-21", cat: "anniversary", emoji: "💖" },
+    ];
+    for (const cd of cds) {
+      db.prepare(`INSERT INTO countdowns (id, creator_id, title, target_date, category, emoji) VALUES (?, ?, ?, ?, ?, ?)`).run(uuidv4(), divsId, cd.title, cd.date, cd.cat, cd.emoji);
+    }
+
+    // Starter questions
+    const questions = [
+      "What was your very first thought when we met at 8:56 PM on 24 Sep? 🌸",
+      "What is your favorite memory of us so far? 💗",
+      "If we could go on an impromptu late-night drive right now, where to? 🌙",
+      "What is one little habit of mine that makes you smile? ✨",
+      "What song always reminds you of us? 🎵",
+      "What is your dream date that we haven't done yet? 🌹",
+      "What made you realize you had feelings for me? 💓"
+    ];
+    const today = new Date();
+    for (let i = 0; i < questions.length; i++) {
+      const d = new Date(today);
+      d.setDate(d.getDate() + i);
+      const dateStr = d.toISOString().split('T')[0];
+      db.prepare(`INSERT INTO daily_questions (id, question, asked_date, created_by) VALUES (?, ?, ?, 'divs')`).run(uuidv4(), questions[i], dateStr);
+    }
+  }
 
   console.log('✓ Database initialized at:', DB_PATH);
 }
