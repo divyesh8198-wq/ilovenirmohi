@@ -2,7 +2,7 @@
   "rewrites": [
     {
       "source": "/api/:match*",
-      "destination": "https://electron-unless-gui-reception.trycloudflare.com/api/:match*"
+      "destination": "https://ilovenirmohi.onrender.com/api/:match*"
     },
     {
       "source": "/(.*)",

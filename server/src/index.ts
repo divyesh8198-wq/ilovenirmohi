@@ -83,6 +83,15 @@ app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok', message: 'Our Little Universe API ✦', time: new Date().toISOString() });
 });
 
+// Serve frontend static build if dist exists (for full-stack deployment on Render)
+const DIST_PATH = path.join(__dirname, '..', '..', 'dist');
+if (fs.existsSync(DIST_PATH)) {
+  app.use(express.static(DIST_PATH));
+  app.get('*', (_req, res) => {
+    res.sendFile(path.join(DIST_PATH, 'index.html'));
+  });
+}
+
 app.listen(PORT, () => {
   console.log(`✦ Our Little Universe API running on http://localhost:${PORT}`);
 });
