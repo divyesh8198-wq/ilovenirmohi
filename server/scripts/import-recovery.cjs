@@ -2,17 +2,21 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { DatabaseSync } = require('node:sqlite');
 const { Pool } = require('pg');
-const { createClient } = require('@supabase/supabase-js');
+const { AwsClient } = require('aws4fetch');
 require('tsx/cjs');
 const { initDatabase } = require('../src/database.ts');
 
 const recoveryRoot = path.resolve(__dirname, '../../../recovery_bundle/server');
 const sourceDb = new DatabaseSync(path.join(recoveryRoot, 'data', 'universe.db'), { readOnly: true });
 const pool = new Pool({ connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false }, max: 1 });
-const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY, {
-  auth: { autoRefreshToken: false, persistSession: false },
+const endpoint = process.env.AWS_ENDPOINT_URL_S3?.replace(/\/$/, '');
+const bucket = process.env.NEON_STORAGE_BUCKET || 'scrapbook-media';
+const client = new AwsClient({
+  accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+  secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+  service: 's3',
+  region: process.env.AWS_REGION || 'us-east-2',
 });
-const bucket = 'scrapbook-media';
 const tableOrder = [
   'users', 'sessions', 'daily_questions', 'photos', 'videos', 'voice_notes', 'memories', 'letters',
   'diary_entries', 'calendar_events', 'date_plans', 'bucket_list', 'question_answers',
@@ -26,16 +30,9 @@ function listFiles(dir) {
   });
 }
 
-async function ensureBucket() {
-  const { data, error } = await supabase.storage.getBucket(bucket);
-  if (data) return;
-  const { error: createError } = await supabase.storage.createBucket(bucket, {
-    public: false,
-    fileSizeLimit: 50 * 1024 * 1024,
-  });
-  if (createError && !createError.message.toLowerCase().includes('already exists')) {
-    throw createError;
-  }
+function objectUrl(objectPath = '') {
+  const safePath = objectPath.split('/').map(encodeURIComponent).join('/');
+  return `${endpoint}/${encodeURIComponent(bucket)}${safePath ? `/${safePath}` : ''}`;
 }
 
 async function uploadFiles() {
@@ -44,13 +41,16 @@ async function uploadFiles() {
   for (let i = 0; i < files.length; i += 1) {
     const filePath = files[i];
     const objectPath = path.relative(uploads, filePath).split(path.sep).join('/');
-    const contentType = require('node:util').MIMEType && path.extname(filePath).toLowerCase() === '.jpg'
-      ? 'image/jpeg' : undefined;
-    const { error } = await supabase.storage.from(bucket).upload(objectPath, fs.readFileSync(filePath), {
-      upsert: true,
-      ...(contentType ? { contentType } : {}),
+    const extension = path.extname(filePath).toLowerCase();
+    const contentType = ({
+      '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.png': 'image/png', '.webp': 'image/webp',
+      '.gif': 'image/gif', '.mp4': 'video/mp4', '.webm': 'video/webm', '.mov': 'video/quicktime',
+      '.mp3': 'audio/mpeg', '.m4a': 'audio/mp4', '.wav': 'audio/wav', '.ogg': 'audio/ogg',
+    })[extension] || 'application/octet-stream';
+    const response = await client.fetch(objectUrl(objectPath), {
+      method: 'PUT', body: fs.readFileSync(filePath), headers: { 'content-type': contentType },
     });
-    if (error) throw new Error(`Storage upload failed for an item (${i + 1}/${files.length}): ${error.message}`);
+    if (!response.ok) throw new Error(`Storage upload failed for an item (${i + 1}/${files.length}): HTTP ${response.status}`);
   }
   console.log(`Uploaded ${files.length} private media files.`);
 }
@@ -82,11 +82,12 @@ async function importTables() {
 }
 
 (async () => {
-  for (const name of ['DATABASE_URL', 'SUPABASE_URL', 'SUPABASE_SERVICE_ROLE_KEY']) {
+  for (const name of ['DATABASE_URL', 'AWS_ENDPOINT_URL_S3', 'AWS_ACCESS_KEY_ID', 'AWS_SECRET_ACCESS_KEY']) {
     if (!process.env[name]) throw new Error(`${name} is required`);
   }
+  const bucketCheck = await client.fetch(objectUrl(), { method: 'HEAD' });
+  if (!bucketCheck.ok) throw new Error(`Neon Object Storage bucket check failed (HTTP ${bucketCheck.status}); create the private bucket and verify credentials`);
   await initDatabase();
-  await ensureBucket();
   await uploadFiles();
   await importTables();
   sourceDb.close();

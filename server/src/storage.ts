@@ -1,31 +1,38 @@
 import path from 'path';
 import dotenv from 'dotenv';
-import { createClient } from '@supabase/supabase-js';
+import { AwsClient } from 'aws4fetch';
 
 dotenv.config({ path: path.resolve(__dirname, '../.env') });
 
-const supabaseUrl = process.env.SUPABASE_URL;
-const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-if (!supabaseUrl || !serviceRoleKey) {
-  throw new Error('SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are required');
+const endpoint = process.env.AWS_ENDPOINT_URL_S3?.replace(/\/$/, '');
+const accessKeyId = process.env.AWS_ACCESS_KEY_ID;
+const secretAccessKey = process.env.AWS_SECRET_ACCESS_KEY;
+const region = process.env.AWS_REGION || 'us-east-2';
+const bucket = process.env.NEON_STORAGE_BUCKET || 'scrapbook-media';
+
+if (!endpoint || !accessKeyId || !secretAccessKey) {
+  throw new Error('AWS_ENDPOINT_URL_S3, AWS_ACCESS_KEY_ID, and AWS_SECRET_ACCESS_KEY are required for media storage');
 }
 
-export const supabase = createClient(supabaseUrl, serviceRoleKey, {
-  auth: { autoRefreshToken: false, persistSession: false },
-});
+const client = new AwsClient({ accessKeyId, secretAccessKey, service: 's3', region });
 
-const BUCKET = 'scrapbook-media';
+function objectUrl(objectPath = ''): string {
+  const safePath = objectPath.split('/').map(encodeURIComponent).join('/');
+  return `${endpoint}/${encodeURIComponent(bucket)}${safePath ? `/${safePath}` : ''}`;
+}
+
+async function request(method: string, objectPath = '', body?: Buffer, contentType?: string): Promise<Response> {
+  return client.fetch(objectUrl(objectPath), {
+    method,
+    ...(body ? { body } : {}),
+    ...(contentType ? { headers: { 'content-type': contentType } } : {}),
+  });
+}
 
 export async function initializeMediaStorage(): Promise<void> {
-  const { data } = await supabase.storage.getBucket(BUCKET);
-  if (data) return;
-
-  const { error: createError } = await supabase.storage.createBucket(BUCKET, {
-    public: false,
-    fileSizeLimit: 50 * 1024 * 1024,
-  });
-  if (createError && !createError.message.toLowerCase().includes('already exists')) {
-    throw createError;
+  const response = await request('HEAD');
+  if (!response.ok) {
+    throw new Error(`Neon Object Storage bucket check failed (${response.status}); verify the bucket and AWS credentials`);
   }
 }
 
@@ -36,21 +43,18 @@ export async function uploadMedia(
   contentType: string,
 ): Promise<string> {
   const objectPath = `${category}/${filename}`;
-  const { error } = await supabase.storage.from(BUCKET).upload(objectPath, buffer, {
-    contentType,
-    upsert: false,
-  });
-  if (error) throw error;
+  const response = await request('PUT', objectPath, buffer, contentType);
+  if (!response.ok) throw new Error(`Neon Object Storage upload failed (${response.status})`);
   return objectPath;
 }
 
 export async function downloadMedia(objectPath: string): Promise<Buffer> {
-  const { data, error } = await supabase.storage.from(BUCKET).download(objectPath);
-  if (error) throw error;
-  return Buffer.from(await data.arrayBuffer());
+  const response = await request('GET', objectPath);
+  if (!response.ok) throw new Error(`Neon Object Storage download failed (${response.status})`);
+  return Buffer.from(await response.arrayBuffer());
 }
 
 export async function deleteMedia(objectPath: string): Promise<void> {
-  const { error } = await supabase.storage.from(BUCKET).remove([objectPath]);
-  if (error) throw error;
+  const response = await request('DELETE', objectPath);
+  if (!response.ok) throw new Error(`Neon Object Storage delete failed (${response.status})`);
 }

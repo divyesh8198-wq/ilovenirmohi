@@ -5,7 +5,7 @@ import dotenv from 'dotenv';
 dotenv.config({ path: path.resolve(__dirname, '../.env') });
 
 const connectionString = process.env.DATABASE_URL;
-if (!connectionString) throw new Error('DATABASE_URL must point to the Supabase Postgres session pooler');
+if (!connectionString) throw new Error('DATABASE_URL must point to the Neon Postgres database');
 
 const pool = new Pool({
   connectionString,
