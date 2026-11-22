@@ -3,7 +3,7 @@ services:
     name: our-little-universe-api
     runtime: node
     rootDir: server
-    buildCommand: npm install
+    buildCommand: npm install --include=dev && npm run build
     startCommand: node node_modules/tsx/dist/cli.mjs src/index.ts
     envVars:
       - key: NODE_ENV

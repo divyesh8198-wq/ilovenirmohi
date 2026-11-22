@@ -2,7 +2,7 @@
   "rewrites": [
     {
       "source": "/api/:match*",
-      "destination": "https://ilovenirmohi.onrender.com/api/:match*"
+      "destination": "https://ilovenirmohi-api-2026.onrender.com/api/:match*"
     },
     {
       "source": "/(.*)",
