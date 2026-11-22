@@ -257,6 +257,14 @@ const schema = `
       FOREIGN KEY (user_id) REFERENCES users(id)
     );
 
+    CREATE TABLE IF NOT EXISTS location_sharing (
+      user_id TEXT PRIMARY KEY,
+      enabled INTEGER NOT NULL DEFAULT 0,
+      expires_at TEXT,
+      updated_at TEXT NOT NULL,
+      FOREIGN KEY (user_id) REFERENCES users(id)
+    );
+
     CREATE TABLE IF NOT EXISTS sleep_tracker (
       id TEXT PRIMARY KEY,
       user_id TEXT NOT NULL,
@@ -273,6 +281,7 @@ const schema = `
 
 export async function initDatabase(): Promise<void> {
   await pool.query(schema);
+  await pool.query('ALTER TABLE location_tracker ADD COLUMN IF NOT EXISTS is_charging INTEGER');
   console.log('✓ Supabase Postgres schema ready');
 }
 

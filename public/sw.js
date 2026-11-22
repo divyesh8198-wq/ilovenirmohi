@@ -16,6 +16,10 @@ self.addEventListener('activate', e => {
 self.addEventListener('fetch', e => {
   // Don't cache API calls
   if (e.request.url.includes('/api/')) return;
+  if (e.request.mode === 'navigate') {
+    e.respondWith(fetch(e.request).catch(() => caches.match('/index.html')));
+    return;
+  }
   e.respondWith(
     fetch(e.request).catch(() => caches.match(e.request))
   );

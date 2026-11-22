@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import {
@@ -27,6 +27,48 @@ const NAV_ITEMS = [
 ];
 
 interface LayoutProps { children: React.ReactNode; }
+
+interface InstallPromptEvent extends Event {
+  prompt: () => Promise<void>;
+  userChoice: Promise<{ outcome: 'accepted' | 'dismissed'; platform: string }>;
+}
+
+function InstallAppButton() {
+  const [installPrompt, setInstallPrompt] = useState<InstallPromptEvent | null>(null);
+  const [installed, setInstalled] = useState(false);
+  const isAppleMobile = /iphone|ipad|ipod/i.test(navigator.userAgent);
+
+  useEffect(() => {
+    const onPrompt = (event: Event) => {
+      event.preventDefault();
+      setInstallPrompt(event as InstallPromptEvent);
+    };
+    const onInstalled = () => setInstalled(true);
+    window.addEventListener('beforeinstallprompt', onPrompt);
+    window.addEventListener('appinstalled', onInstalled);
+    return () => {
+      window.removeEventListener('beforeinstallprompt', onPrompt);
+      window.removeEventListener('appinstalled', onInstalled);
+    };
+  }, []);
+
+  async function install() {
+    if (!installPrompt) return;
+    await installPrompt.prompt();
+    const choice = await installPrompt.userChoice;
+    if (choice.outcome === 'accepted') setInstalled(true);
+    setInstallPrompt(null);
+  }
+
+  if (installed) return <p className="px-3 py-2 text-center text-xs font-semibold text-emerald-700">App added to your home screen ✓</p>;
+  if (installPrompt) return <button onClick={() => void install()} className="w-full rounded-xl border border-pink-200 bg-white px-3 py-2 text-sm font-semibold text-pink-700 hover:bg-pink-50">Install Our Little Universe 📱</button>;
+  return (
+    <details className="rounded-xl bg-white/60 px-3 py-2 text-sm text-stone-600">
+      <summary className="cursor-pointer list-none text-center font-semibold text-pink-700">Use as an app 📱</summary>
+      <p className="mt-2 text-center text-xs leading-relaxed">{isAppleMobile ? 'In Safari, tap Share, then Add to Home Screen.' : 'Open your browser menu and choose Install app or Add to Home screen.'}</p>
+    </details>
+  );
+}
 
 export default function Layout({ children }: LayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -109,6 +151,7 @@ export default function Layout({ children }: LayoutProps) {
           <p className="font-handwriting text-xs text-center text-stone-400 mb-3">
             Two little worlds, one little universe ✦
           </p>
+          <div className="mb-3"><InstallAppButton /></div>
           <button onClick={logout}
             className="w-full flex items-center gap-2 px-3 py-2 text-sm text-stone-400
                        hover:text-pink-600 hover:bg-pink-50 rounded-xl transition-all">
